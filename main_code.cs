@@ -11,163 +11,174 @@ using System.Windows.Forms;
 namespace Project_1
 {
     public partial class Form1 : Form
-    {
-        public Graphics canvas;
+    { 
+        private SolidBrush brush;
 
-        public SolidBrush brush;
+        private static List<Point> shapes;
 
-        public static int i;
+        private static int i;
 
         public Form1()
         {
             InitializeComponent();
 
-            canvas = pictureBox1.CreateGraphics();
-
-            brush = new SolidBrush(Color.White);
+            brush = new SolidBrush(Color.DarkGoldenrod);
         }
 
         static Form1()
         {
+            shapes = new List<Point>();
+
             i = 0;
-        }
-
-        private void PictureBox1_MouseClick(object sender, MouseEventArgs e)
-        {
-            if (e.Button == MouseButtons.Left)
-            {
-                if (listBox1.SelectedItem == null)
-                {
-                    Point.shapes[i] = new Circle();
-
-                    brush.Color = Color.DarkRed;
-                }
-
-                if ((string)listBox1.SelectedItem == "circle")
-                    Point.shapes[i] = new Circle();
-
-                if ((string)listBox1.SelectedItem == "triangle")
-                    Point.shapes[i] = new Triangle();
-
-                if ((string)listBox1.SelectedItem == "square")
-                    Point.shapes[i] = new Square();
-
-                Point.shapes[i].Draw(canvas, brush);
-
-                ++i;
-            }
-
-            if (e.Button == MouseButtons.Right)
-            {
-                foreach (Point shape in Point.shapes)
-                {
-                    if (shape is Circle)
-                    {
-
-                    }
-
-                    if (shape is Triangle)
-                    {
-
-                    }
-
-                    if (shape is Square)
-                    {
-                        if (e.X >= shape.x && e.X <= shape.x + (int)Math.Sqrt(Point.radius * Point.radius / 2) && e.Y >= shape.y && e.Y <= shape.y + (int)Math.Sqrt(Point.radius * Point.radius / 2))
-                        {
-                            shape.Erase(canvas);
-                        }
-                    }
-                }
-            }
         }
 
         private void ListBox1_SelectedValueChanged(object sender, EventArgs e)
         {
             if ((string)listBox1.SelectedItem == "circle")
             {
-                Point.shapes[i] = new Circle();
-
-                brush.Color = Point.shapes[i].color;
+                shapes.Add(new Circle());
             }
 
             if ((string)listBox1.SelectedItem == "triangle")
             {
-                Point.shapes[i] = new Triangle();
-
-                brush.Color = Point.shapes[i].color;
+                shapes.Add(new Triangle());
             }
 
             if ((string)listBox1.SelectedItem == "square")
             {
-                Point.shapes[i] = new Square();
-
-                brush.Color = Point.shapes[i].color;
+                shapes.Add(new Square());
             }
         }
 
-        private void PictureBox1_DragDrop(object sender, DragEventArgs e)
+        private void Form1_Paint(object sender, PaintEventArgs e)
         {
-            var data = e.Data.GetData(DataFormats.FileDrop);
-
-            if (data != null)
+            foreach (Point shape in shapes)
             {
-                var fileNames = data as string[];
-
-                if (fileNames.Length > 0)
-                    pictureBox1.Image = Image.FromFile(fileNames[0]);
+                shape.Draw(e.Graphics, brush);
             }
         }
 
-        private void Form1_Load(object sender, EventArgs e)
+        private void Form1_MouseClick(object sender, MouseEventArgs e)
         {
-            pictureBox1.AllowDrop = true;
+            int j = 0;
+
+            if (e.Button == MouseButtons.Left)
+            {
+                if (listBox1.SelectedItem == null)
+                {
+                    return;
+                }
+
+                if ((string)listBox1.SelectedItem == "circle")
+                    shapes.Add(new Circle());
+
+                if ((string)listBox1.SelectedItem == "triangle")
+                    shapes.Add(new Triangle());
+
+                if ((string)listBox1.SelectedItem == "square")
+                    shapes.Add(new Square());
+
+                Refresh();
+
+                ++i;
+            }
+
+            if (e.Button == MouseButtons.Right)
+            {
+                foreach (Point shape in shapes)
+                {
+                    if (shape.Inside(e.X, e.Y))
+                    {
+                        break;
+                    }
+
+                    j++;
+                }
+
+                if (i < shapes.Count)
+                {
+                    shapes.Remove(shapes[j]);
+
+                    --i;
+                }
+            }
         }
 
-        private void PictureBox1_DragEnter(object sender, DragEventArgs e)
+        private void Form1_MouseDown(object sender, MouseEventArgs e)
         {
-            e.Effect = DragDropEffects.Copy;
+            bool clicked = false;
+
+            foreach (Point shape in shapes)
+            {
+                if (shape.Inside(e.X, e.Y))
+                    clicked = true;
+            }
+
+            if (!clicked)
+            {
+                if ((string)listBox1.SelectedItem == "circle")
+                {
+                    shapes[i] = new Circle();
+                }
+
+                if ((string)listBox1.SelectedItem == "triangle")
+                {
+                    shapes[i] = new Triangle();
+                }
+
+                if ((string)listBox1.SelectedItem == "square")
+                {
+                    shapes[i] = new Square();
+                }
+            }
+        }
+
+        private void Form1_MouseMove(object sender, MouseEventArgs e)
+        {
+
+        }
+
+        private void Form1_MouseUp(object sender, MouseEventArgs e)
+        {
+
         }
     }
 
     public abstract class Point
     {
-        public double x;
-        public double y;
-        public Color color;
-        public static double radius;
-        public static Point[] shapes = new Point[1000];
+        protected double x;
+        protected double y;
+        protected static Color color;
+        protected static double radius;
 
         public Point()
         {
             x = Cursor.Position.X;
             y = Cursor.Position.Y;
-            color = Color.White;
         }
 
-        public Point(double x, double y, Color color)
+        public Point(double x, double y)
         {
             this.x = x;
             this.y = y;
-            this.color = color;
         }
 
         static Point()
         {
             radius = 26;
+            color = Color.DarkGoldenrod;
+        }
 
-            for (int i = 0; i < shapes.Length; ++i)
-            {
-                if (shapes[i] != null)
-                    shapes[i] = shapes[i];
-                else
-                    shapes[i] = null;
-            }
+        public Color Color
+        {
+            get => Color;
+
+            set => Color = value;
         }
 
         public abstract void Draw(Graphics canvas, Brush brush);
 
-        public abstract void Erase(Graphics canvas);
+        public abstract bool Inside(int MouseX, int MouseY);
     }
 
     public class Circle : Point
@@ -176,27 +187,18 @@ namespace Project_1
         {
             x = Cursor.Position.X;
             y = Cursor.Position.Y;
-            color = Color.DarkRed;
         }
 
-        public Circle(double x, double y, Color color)
+        public Circle(double x, double y)
         {
             this.x = x;
             this.y = y;
-            this.color = color;
         }
 
         static Circle()
         {
             radius = 26;
-
-            for (int i = 0; i < shapes.Length; ++i)
-            {
-                if (shapes[i] != null)
-                    shapes[i] = shapes[i];
-                else
-                    shapes[i] = null;
-            }
+            color = Color.DarkGoldenrod;
         }
 
         public override void Draw(Graphics canvas, Brush brush)
@@ -206,9 +208,9 @@ namespace Project_1
             canvas.FillEllipse(brush, rect);
         }
 
-        public override void Erase(Graphics canvas)
+        public override bool Inside(int MouseX, int MouseY)
         {
-
+            return Math.Pow(x - MouseX, 2) + Math.Pow(y - MouseY, 2) <= radius * radius;
         }
     }
 
@@ -218,27 +220,18 @@ namespace Project_1
         {
             x = Cursor.Position.X;
             y = Cursor.Position.Y;
-            color = Color.DarkGreen;
         }
 
         public Triangle(double x, double y, Color color)
         {
             this.x = x;
             this.y = y;
-            this.color = color;
         }
 
         static Triangle()
         {
             radius = 26;
-
-            for (int i = 0; i < shapes.Length; ++i)
-            {
-                if (shapes[i] != null)
-                    shapes[i] = shapes[i];
-                else
-                    shapes[i] = null;
-            }
+            color = Color.DarkGoldenrod;
         }
 
         public override void Draw(Graphics canvas, Brush brush)
@@ -265,49 +258,66 @@ namespace Project_1
             canvas.FillPolygon(brush, p);
         }
 
-        public override void Erase(Graphics canvas)
+        private int PointOfLine(int[] X, int[] Y)
         {
+            try
+            {
+                int f = (X[1] - X[0]) * (Y[2] - Y[1]) - (X[2] - X[1]) * (Y[1] - Y[0]);
 
+                if (f == 0)
+                    return 0;
+                if (f > 1)
+                    return 1;
+                return -1;
+            }
+
+            catch
+            {
+                return -1;
+            }
+        }
+
+        public override bool Inside(int MouseX, int MouseY)
+        {
+            int SideLength = (int)((radius * 3) / Math.Sqrt(3.0));
+            int f1, f2, f3;
+
+            f1 = PointOfLine(new int[] { MouseX, (int)x - SideLength / 2, (int)x }, new int[] { MouseY, (int)y + (int)radius / 2, (int)y - (int)radius });
+            f2 = PointOfLine(new int[] { MouseX, (int)x, (int)x + SideLength / 2 }, new int[] { MouseY, (int)y - (int)radius, (int)y + (int)radius / 2 });
+            f3 = PointOfLine(new int[] { MouseX, (int)x + SideLength / 2, (int)x - SideLength / 2 }, new int[] { MouseY, (int)y + (int)radius / 2, (int)y + (int)radius / 2 });
+
+            return (f1 >= 0 && f2 >= 0 && f3 >= 0) || (f1 <= 0 && f2 <= 0 && f3 <= 0);
         }
     }
 
     public class Square : Point
     {
-        public int X;
-        public int Y;
-        public Rectangle rect;
+        private int X;
+        private int Y;
+        private Rectangle rect;
 
         public Square()
         {
             X = (int)(Cursor.Position.X + (int)radius / 2 - (int)radius / 6 + radius * Math.Cos(135 * (2 * Math.PI / 360)));
             Y = (int)(Cursor.Position.Y - (int)radius / 2 - radius * Math.Sin(135 * (2 * Math.PI / 360)));
-            color = Color.DarkBlue;
             rect = new Rectangle(X, Y, (int)Math.Sqrt(radius * radius / 2), (int)Math.Sqrt(radius * radius / 2));
             x = rect.X;
             y = rect.Y;
         }
 
-        public Square(double x, double y, int X, int Y, Color color, Rectangle rect) : base(x, y, color)
+        public Square(double x, double y, int X, int Y, Rectangle rect) : base(x, y)
         {
             this.x = x;
             this.y = y;
             this.X = X;
             this.Y = Y;
-            this.color = color;
             this.rect = rect;
         }
 
         static Square()
         {
             radius = 26;
-
-            for (int i = 0; i < shapes.Length; ++i)
-            {
-                if (shapes[i] != null)
-                    shapes[i] = shapes[i];
-                else
-                    shapes[i] = null;
-            }
+            color = Color.DarkGoldenrod;
         }
 
         public override void Draw(Graphics canvas, Brush brush)
@@ -315,11 +325,14 @@ namespace Project_1
             canvas.FillRectangle(brush, rect);
         }
 
-        public override void Erase(Graphics canvas)
+        public override bool Inside(int MouseX, int MouseY)
         {
-            canvas.FillRectangle(new SolidBrush(Color.FromArgb(255, 192, 192)), rect);
-
-            shapes[Form1.i - 1] = null;
+            if (MouseX >= x && MouseX <= x + (int)Math.Sqrt(radius * radius / 2) && MouseY >= y && MouseY <= y + (int)Math.Sqrt(radius * radius / 2))
+            {
+                return true;
+            }
+            else
+                return false;
         }
     }
 }
