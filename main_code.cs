@@ -16,20 +16,24 @@ namespace Project_1
 
         private static List<Point> shapes;
 
-        private static int i;
+        private int i;
+
+        private bool dragging;
 
         public Form1()
         {
             InitializeComponent();
 
             brush = new SolidBrush(Color.DarkGoldenrod);
+
+            i = 0;
+
+            dragging = false;
         }
 
         static Form1()
         {
             shapes = new List<Point>();
-
-            i = 0;
         }
 
         private void ListBox1_SelectedValueChanged(object sender, EventArgs e)
@@ -60,8 +64,6 @@ namespace Project_1
 
         private void Form1_MouseClick(object sender, MouseEventArgs e)
         {
-            int j = 0;
-
             if (e.Button == MouseButtons.Left)
             {
                 if (listBox1.SelectedItem == null)
@@ -79,68 +81,61 @@ namespace Project_1
                     shapes.Add(new Square());
 
                 Refresh();
-
-                ++i;
             }
+
+            int j = 0;
 
             if (e.Button == MouseButtons.Right)
             {
+                j = 0;
+
                 foreach (Point shape in shapes)
                 {
+                    ++j;
+
                     if (shape.Inside(e.X, e.Y))
                     {
                         break;
                     }
-
-                    j++;
                 }
 
-                if (i < shapes.Count)
-                {
-                    shapes.Remove(shapes[j]);
+                shapes.Remove(shapes[j - 1]);
 
-                    --i;
-                }
+                Refresh();
             }
         }
 
+        int k = 0;
+
         private void Form1_MouseDown(object sender, MouseEventArgs e)
         {
-            bool clicked = false;
+            k = 0;
 
             foreach (Point shape in shapes)
             {
+                ++k;
+
                 if (shape.Inside(e.X, e.Y))
-                    clicked = true;
-            }
-
-            if (!clicked)
-            {
-                if ((string)listBox1.SelectedItem == "circle")
                 {
-                    shapes[i] = new Circle();
-                }
+                    dragging = true;
 
-                if ((string)listBox1.SelectedItem == "triangle")
-                {
-                    shapes[i] = new Triangle();
-                }
-
-                if ((string)listBox1.SelectedItem == "square")
-                {
-                    shapes[i] = new Square();
+                    break;
                 }
             }
         }
 
         private void Form1_MouseMove(object sender, MouseEventArgs e)
         {
-
+            if (dragging)
+            {
+                shapes[k].X += e.X;
+                shapes[k].Y += e.Y;
+            }
         }
 
         private void Form1_MouseUp(object sender, MouseEventArgs e)
         {
-
+            dragging = false;
         }
     }
 
@@ -169,11 +164,25 @@ namespace Project_1
             color = Color.DarkGoldenrod;
         }
 
+        public double X
+        {
+            get => x;
+
+            set => x = value;
+        }
+
+        public double Y
+        {
+            get => y;
+
+            set => y = value;
+        }
+
         public Color Color
         {
-            get => Color;
+            get => color;
 
-            set => Color = value;
+            set => color = value;
         }
 
         public abstract void Draw(Graphics canvas, Brush brush);
