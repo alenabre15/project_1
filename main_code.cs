@@ -16,8 +16,6 @@ namespace Project_1
 
         private static List<Point> shapes;
 
-        private int i;
-
         private bool dragging;
 
         public Form1()
@@ -25,8 +23,6 @@ namespace Project_1
             InitializeComponent();
 
             brush = new SolidBrush(Color.DarkGoldenrod);
-
-            i = 0;
 
             dragging = false;
         }
@@ -64,6 +60,8 @@ namespace Project_1
 
         private void Form1_MouseClick(object sender, MouseEventArgs e)
         {
+            int j = 0, k = 0;
+            
             if (e.Button == MouseButtons.Left)
             {
                 if (listBox1.SelectedItem == null)
@@ -82,8 +80,6 @@ namespace Project_1
 
                 Refresh();
             }
-
-            int j = 0;
 
             if (e.Button == MouseButtons.Right)
             {
@@ -104,8 +100,6 @@ namespace Project_1
                 Refresh();
             }
         }
-
-        int k = 0;
 
         private void Form1_MouseDown(object sender, MouseEventArgs e)
         {
@@ -128,8 +122,8 @@ namespace Project_1
         {
             if (dragging)
             {
-                shapes[k].X += e.X;
-                shapes[k].Y += e.Y;
+                shapes[k - 1].X += e.X;
+                shapes[k - 1].Y += e.Y;
             }
         }
 
