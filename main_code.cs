@@ -60,7 +60,7 @@ namespace Project_1
 
         private void Form1_MouseClick(object sender, MouseEventArgs e)
         {
-            int j = 0, k = 0;
+            int j = 0;
             
             if (e.Button == MouseButtons.Left)
             {
@@ -103,7 +103,7 @@ namespace Project_1
 
         private void Form1_MouseDown(object sender, MouseEventArgs e)
         {
-            k = 0;
+            int k = 0;
 
             foreach (Point shape in shapes)
             {
