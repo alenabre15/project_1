@@ -11,12 +11,14 @@ using System.Windows.Forms;
 namespace Project_1
 {
     public partial class Form1 : Form
-    { 
+    {
         private SolidBrush brush;
 
         private static List<Point> shapes;
 
         private bool dragging;
+
+        private int k;
 
         public Form1()
         {
@@ -25,6 +27,8 @@ namespace Project_1
             brush = new SolidBrush(Color.DarkGoldenrod);
 
             dragging = false;
+
+            k = 0;
         }
 
         static Form1()
@@ -61,7 +65,7 @@ namespace Project_1
         private void Form1_MouseClick(object sender, MouseEventArgs e)
         {
             int j = 0;
-            
+
             if (e.Button == MouseButtons.Left)
             {
                 if (listBox1.SelectedItem == null)
@@ -103,7 +107,7 @@ namespace Project_1
 
         private void Form1_MouseDown(object sender, MouseEventArgs e)
         {
-            int k = 0;
+            k = 0;
 
             foreach (Point shape in shapes)
             {
@@ -185,7 +189,7 @@ namespace Project_1
     }
 
     public class Circle : Point
-    { 
+    {
         public Circle()
         {
             x = Cursor.Position.X;
@@ -241,7 +245,7 @@ namespace Project_1
         {
             float angle = 0;
 
-            float X = (float)x - (int)radius / 2; 
+            float X = (float)x - (int)radius / 2;
             float Y = (float)y - (int)radius - (int)radius / 3;
 
             PointF[] p = new PointF[3];
