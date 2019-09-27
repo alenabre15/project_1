@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,54 +13,52 @@ namespace Project_1
 {
     public partial class Form1 : Form
     {
-        private SolidBrush brush;
+        private static List<Point> points;
 
-        private static List<Point> shapes;
+        private int pointChosen;
 
-        private bool dragging;
+        private static List<PointF> pointsF;
 
-        private int k;
+        private static PointF[] points_F;
 
         public Form1()
         {
             InitializeComponent();
 
-            brush = new SolidBrush(Color.DarkGoldenrod);
-
-            dragging = false;
-
-            k = 0;
+            pointChosen = 0;
         }
 
         static Form1()
         {
-            shapes = new List<Point>();
-        }
+            points = new List<Point>();
 
-        private void ListBox1_SelectedValueChanged(object sender, EventArgs e)
-        {
-            if ((string)listBox1.SelectedItem == "circle")
-            {
-                shapes.Add(new Circle());
-            }
+            pointsF = new List<PointF>();
 
-            if ((string)listBox1.SelectedItem == "triangle")
-            {
-                shapes.Add(new Triangle());
-            }
-
-            if ((string)listBox1.SelectedItem == "square")
-            {
-                shapes.Add(new Square());
-            }
+            points_F = new PointF[pointsF.Count];
         }
 
         private void Form1_Paint(object sender, PaintEventArgs e)
         {
-            foreach (Point shape in shapes)
+            BackColor = Color.Black;
+
+            e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+
+            points = GrahamScan.ConvexHull(points);
+
+            foreach (Point point in points)
             {
-                shape.Draw(e.Graphics, brush);
+                point.Draw(e.Graphics);
             }
+
+            for (int i = 0; i < points.Count; ++i)
+            {
+                pointsF.Add(new PointF((float)points[i].X, (float)points[i].Y));
+            }
+
+            points_F = pointsF.ToArray();
+
+            if (points.Count > 2)
+                e.Graphics.FillPolygon(new SolidBrush(Color.White), points_F);
         }
 
         private void Form1_MouseClick(object sender, MouseEventArgs e)
@@ -68,19 +67,23 @@ namespace Project_1
 
             if (e.Button == MouseButtons.Left)
             {
-                if (listBox1.SelectedItem == null)
+                foreach (Point Point in points)
+                    if (Point.Inside(e.X, e.Y))
+                        return;
+
+                if (pointChosen == 0)
                 {
                     return;
                 }
 
-                if ((string)listBox1.SelectedItem == "circle")
-                    shapes.Add(new Circle());
+                if (pointChosen == 1)
+                    points.Add(new Circle(e.X, e.Y));
 
-                if ((string)listBox1.SelectedItem == "triangle")
-                    shapes.Add(new Triangle());
+                if (pointChosen == 2)
+                    points.Add(new Triangle(e.X, e.Y));
 
-                if ((string)listBox1.SelectedItem == "square")
-                    shapes.Add(new Square());
+                if (pointChosen == 3)
+                    points.Add(new Square(e.X, e.Y));
 
                 Refresh();
             }
@@ -89,17 +92,18 @@ namespace Project_1
             {
                 j = 0;
 
-                foreach (Point shape in shapes)
+                foreach (Point Point in points)
                 {
                     ++j;
 
-                    if (shape.Inside(e.X, e.Y))
+                    if (Point.Inside(e.X, e.Y))
                     {
                         break;
                     }
                 }
 
-                shapes.Remove(shapes[j - 1]);
+                if (points[j - 1].Inside(e.X, e.Y))
+                    points.Remove(points[j - 1]);
 
                 Refresh();
             }
@@ -107,33 +111,53 @@ namespace Project_1
 
         private void Form1_MouseDown(object sender, MouseEventArgs e)
         {
-            k = 0;
-
-            foreach (Point shape in shapes)
+            foreach (Point Point in points)
             {
-                ++k;
-
-                if (shape.Inside(e.X, e.Y))
+                if (Point.Inside(e.X, e.Y))
                 {
-                    dragging = true;
+                    Point.Dragging = true;
 
-                    break;
+                    Point.dX = e.X - Point.X;
+                    Point.dY = e.Y - Point.Y;
                 }
             }
         }
 
         private void Form1_MouseMove(object sender, MouseEventArgs e)
         {
-            if (dragging)
+            foreach (Point Point in points)
             {
-                shapes[k - 1].X += e.X;
-                shapes[k - 1].Y += e.Y;
+                if (Point.Dragging)
+                {
+                    Point.X = e.X - Point.dX;
+                    Point.Y = e.Y - Point.dY;
+
+                    Refresh();
+                }
             }
         }
 
         private void Form1_MouseUp(object sender, MouseEventArgs e)
         {
-            dragging = false;
+            foreach (Point Point in points)
+            {
+                Point.Dragging = false;
+            }
+        }
+
+        private void ToolStripMenuItem2_Click(object sender, EventArgs e)
+        {
+            pointChosen = 1;
+        }
+
+        private void ToolStripMenuItem3_Click(object sender, EventArgs e)
+        {
+            pointChosen = 2;
+        }
+
+        private void ToolStripMenuItem4_Click(object sender, EventArgs e)
+        {
+            pointChosen = 3;
         }
     }
 
@@ -141,14 +165,12 @@ namespace Project_1
     {
         protected double x;
         protected double y;
+        protected double dx;
+        protected double dy;
+        protected bool move;
+        protected bool dragging;
         protected static Color color;
         protected static double radius;
-
-        public Point()
-        {
-            x = Cursor.Position.X;
-            y = Cursor.Position.Y;
-        }
 
         public Point(double x, double y)
         {
@@ -158,7 +180,7 @@ namespace Project_1
 
         static Point()
         {
-            radius = 26;
+            radius = 25;
             color = Color.DarkGoldenrod;
         }
 
@@ -176,6 +198,27 @@ namespace Project_1
             set => y = value;
         }
 
+        public double dX
+        {
+            get => dx;
+
+            set => dx = value;
+        }
+
+        public double dY
+        {
+            get => dy;
+
+            set => dy = value;
+        }
+
+        public bool Move
+        {
+            get => move;
+
+            set => move = value;
+        }
+
         public Color Color
         {
             get => color;
@@ -183,36 +226,31 @@ namespace Project_1
             set => color = value;
         }
 
-        public abstract void Draw(Graphics canvas, Brush brush);
+        public bool Dragging
+        {
+            get => dragging;
+
+            set => dragging = value;
+        }
+
+        public abstract void Draw(Graphics canvas);
 
         public abstract bool Inside(int MouseX, int MouseY);
     }
 
     public class Circle : Point
     {
-        public Circle()
-        {
-            x = Cursor.Position.X;
-            y = Cursor.Position.Y;
-        }
-
-        public Circle(double x, double y)
+        public Circle(double x, double y) : base(x, y)
         {
             this.x = x;
             this.y = y;
         }
 
-        static Circle()
+        public override void Draw(Graphics canvas)
         {
-            radius = 26;
-            color = Color.DarkGoldenrod;
-        }
+            Rectangle rect = new Rectangle((int)x - (int)(radius), (int)y - (int)radius, 2 * (int)radius, 2 * (int)radius);
 
-        public override void Draw(Graphics canvas, Brush brush)
-        {
-            Rectangle rect = new Rectangle(Cursor.Position.X - (int)(radius / 2), Cursor.Position.Y - (int)radius - (int)(radius / 3), (int)radius, (int)radius);
-
-            canvas.FillEllipse(brush, rect);
+            canvas.FillEllipse(new SolidBrush(color), rect);
         }
 
         public override bool Inside(int MouseX, int MouseY)
@@ -223,46 +261,31 @@ namespace Project_1
 
     public class Triangle : Point
     {
-        public Triangle()
-        {
-            x = Cursor.Position.X;
-            y = Cursor.Position.Y;
-        }
-
-        public Triangle(double x, double y, Color color)
+        public Triangle(double x, double y) : base(x, y)
         {
             this.x = x;
             this.y = y;
         }
 
-        static Triangle()
+        public override void Draw(Graphics canvas)
         {
-            radius = 26;
-            color = Color.DarkGoldenrod;
-        }
-
-        public override void Draw(Graphics canvas, Brush brush)
-        {
-            float angle = 0;
-
-            float X = (float)x - (int)radius / 2;
-            float Y = (float)y - (int)radius - (int)radius / 3;
+            float Side = (float)(radius * 3) / (float)Math.Sqrt(3.0);
 
             PointF[] p = new PointF[3];
 
-            p[0].X = X;
+            p[0].X = (float)x;
 
-            p[0].Y = Y;
+            p[0].Y = (float)y - (float)radius;
 
-            p[1].X = (float)(X + radius * Math.Cos(angle));
+            p[1].X = (float)(x + Side / 2);
 
-            p[1].Y = (float)(Y + radius * Math.Sin(angle));
+            p[1].Y = (float)(y + radius / 2);
 
-            p[2].X = (float)(X + radius * Math.Cos(angle + Math.PI / 3));
+            p[2].X = (float)(x - Side / 2);
 
-            p[2].Y = (float)(Y + radius * Math.Sin(angle + Math.PI / 3));
+            p[2].Y = (float)(y + radius / 2);
 
-            canvas.FillPolygon(brush, p);
+            canvas.FillPolygon(new SolidBrush(color), p);
         }
 
         private int PointOfLine(int[] X, int[] Y)
@@ -273,8 +296,10 @@ namespace Project_1
 
                 if (f == 0)
                     return 0;
+
                 if (f > 1)
                     return 1;
+
                 return -1;
             }
 
@@ -286,12 +311,13 @@ namespace Project_1
 
         public override bool Inside(int MouseX, int MouseY)
         {
-            int SideLength = (int)((radius * 3) / Math.Sqrt(3.0));
+            float SideLength = (float)(radius * 3 / Math.Sqrt(3.0));
+
             int f1, f2, f3;
 
-            f1 = PointOfLine(new int[] { MouseX, (int)x - SideLength / 2, (int)x }, new int[] { MouseY, (int)y + (int)radius / 2, (int)y - (int)radius });
-            f2 = PointOfLine(new int[] { MouseX, (int)x, (int)x + SideLength / 2 }, new int[] { MouseY, (int)y - (int)radius, (int)y + (int)radius / 2 });
-            f3 = PointOfLine(new int[] { MouseX, (int)x + SideLength / 2, (int)x - SideLength / 2 }, new int[] { MouseY, (int)y + (int)radius / 2, (int)y + (int)radius / 2 });
+            f1 = PointOfLine(new int[] { MouseX, (int)x - (int)(SideLength / 2), (int)x }, new int[] { MouseY, (int)y + (int)(radius / 2), (int)y - (int)radius });
+            f2 = PointOfLine(new int[] { MouseX, (int)x, (int)x + (int)(SideLength / 2) }, new int[] { MouseY, (int)y - (int)radius, (int)y + (int)(radius / 2) });
+            f3 = PointOfLine(new int[] { MouseX, (int)x + (int)(SideLength / 2), (int)x - (int)(SideLength / 2) }, new int[] { MouseY, (int)y + (int)(radius / 2), (int)y + (int)(radius / 2) });
 
             return (f1 >= 0 && f2 >= 0 && f3 >= 0) || (f1 <= 0 && f2 <= 0 && f3 <= 0);
         }
@@ -299,47 +325,90 @@ namespace Project_1
 
     public class Square : Point
     {
-        private int X;
-        private int Y;
-        private Rectangle rect;
-
-        public Square()
-        {
-            X = (int)(Cursor.Position.X + (int)radius / 2 - (int)radius / 6 + radius * Math.Cos(135 * (2 * Math.PI / 360)));
-            Y = (int)(Cursor.Position.Y - (int)radius / 2 - radius * Math.Sin(135 * (2 * Math.PI / 360)));
-            rect = new Rectangle(X, Y, (int)Math.Sqrt(radius * radius / 2), (int)Math.Sqrt(radius * radius / 2));
-            x = rect.X;
-            y = rect.Y;
-        }
-
-        public Square(double x, double y, int X, int Y, Rectangle rect) : base(x, y)
+        public Square(double x, double y) : base(x, y)
         {
             this.x = x;
             this.y = y;
-            this.X = X;
-            this.Y = Y;
-            this.rect = rect;
         }
 
-        static Square()
+        public override void Draw(Graphics canvas)
         {
-            radius = 26;
-            color = Color.DarkGoldenrod;
-        }
-
-        public override void Draw(Graphics canvas, Brush brush)
-        {
-            canvas.FillRectangle(brush, rect);
+            canvas.FillRectangle(new SolidBrush(color), new Rectangle((int)(x - radius * (float)Math.Sqrt(2) / 2), (int)(y - radius * (float)Math.Sqrt(2) / 2), (int)(radius * (float)Math.Sqrt(2)), (int)(radius * (float)Math.Sqrt(2))));
         }
 
         public override bool Inside(int MouseX, int MouseY)
         {
-            if (MouseX >= x && MouseX <= x + (int)Math.Sqrt(radius * radius / 2) && MouseY >= y && MouseY <= y + (int)Math.Sqrt(radius * radius / 2))
+            if (MouseX >= x - (int)Math.Sqrt(radius * radius / 2) && MouseX <= x + (int)Math.Sqrt(radius * radius / 2) && MouseY >= y - (int)Math.Sqrt(radius * radius / 2) && MouseY <= y + (int)Math.Sqrt(radius * radius / 2))
             {
                 return true;
             }
             else
                 return false;
+        }
+    }
+
+    public class GrahamScan
+    {
+        public static double orientation(Point p, Point q, Point r)
+        {
+            double val = (q.Y - p.Y) * (r.X - q.X) -
+                    (q.X - p.X) * (r.Y - q.Y);
+
+            if (val == 0) return 0; // collinear 
+            return (val > 0) ? 1 : 2; // clock or counterclock wise 
+        }
+
+        // Prints convex hull of a set of n points. 
+        public static List<Point> ConvexHull(List<Point> points)
+        {
+            // There must be at least 3 points 
+            if (points.Count < 3) return points;
+
+            // Initialize Result 
+            List<Point> hull = new List<Point>();
+
+            // Find the leftmost point 
+            int l = 0;
+            for (int i = 1; i < points.Count; i++)
+                if (points[i].X < points[l].X)
+                    l = i;
+
+            // Start from leftmost point, keep moving  
+            // counterclockwise until reach the start point 
+            // again. This loop runs O(h) times where h is 
+            // number of points in result or output. 
+            int p = l, q;
+            do
+            {
+                // Add current point to result 
+                hull.Add(points[p]);
+
+                // Search for a point 'q' such that  
+                // orientation(p, x, q) is counterclockwise  
+                // for all points 'x'. The idea is to keep  
+                // track of last visited most counterclock- 
+                // wise point in q. If any point 'i' is more  
+                // counterclock-wise than q, then update q. 
+                q = (p + 1) % points.Count;
+
+                for (int i = 0; i < points.Count; i++)
+                {
+                    // If i is more counterclockwise than  
+                    // current q, then update q 
+                    if (orientation(points[p], points[i], points[q])
+                                                        == 2)
+                        q = i;
+                }
+
+                // Now q is the most counterclockwise with 
+                // respect to p. Set p as q for next iteration,  
+                // so that q is added to result 'hull' 
+                p = q;
+
+            } while (p != l); // While we don't come to first  
+                              // point 
+
+            return hull;
         }
     }
 }
