@@ -17,10 +17,6 @@ namespace Project_1
 
         private int pointChosen;
 
-        private static List<PointF> pointsF;
-
-        private static PointF[] points_F;
-
         public Form1()
         {
             InitializeComponent();
@@ -31,10 +27,6 @@ namespace Project_1
         static Form1()
         {
             points = new List<Point>();
-
-            pointsF = new List<PointF>();
-
-            points_F = new PointF[pointsF.Count];
         }
 
         private void Form1_Paint(object sender, PaintEventArgs e)
@@ -50,15 +42,15 @@ namespace Project_1
                 point.Draw(e.Graphics);
             }
 
+            List<PointF> pointsF = new List<PointF>();
+
             for (int i = 0; i < points.Count; ++i)
             {
                 pointsF.Add(new PointF((float)points[i].X, (float)points[i].Y));
             }
 
-            points_F = pointsF.ToArray();
-
             if (points.Count > 2)
-                e.Graphics.FillPolygon(new SolidBrush(Color.White), points_F);
+                e.Graphics.FillPolygon(new SolidBrush(Color.White), pointsF.ToArray());
         }
 
         private void Form1_MouseClick(object sender, MouseEventArgs e)
