@@ -35,7 +35,7 @@ namespace Project_1
 
             e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
 
-            points = GrahamScan.ConvexHull(points);
+            points = Polygon.ConvexHull(points);
 
             foreach (Point point in points)
             {
@@ -47,7 +47,7 @@ namespace Project_1
             for (int i = 0; i < points.Count; ++i)
             {
                 pointsF.Add(new PointF((float)points[i].X, (float)points[i].Y));
-            }
+            }          
 
             if (points.Count > 2)
                 e.Graphics.FillPolygon(new SolidBrush(Color.White), pointsF.ToArray());
@@ -103,29 +103,40 @@ namespace Project_1
 
         private void Form1_MouseDown(object sender, MouseEventArgs e)
         {
-            foreach (Point Point in points)
+            foreach (Point point in points)
             {
-                if (Point.Inside(e.X, e.Y))
+                if (point.Inside(e.X, e.Y))
                 {
-                    Point.Dragging = true;
+                    point.Dragging = true;
 
-                    Point.dX = e.X - Point.X;
-                    Point.dY = e.Y - Point.Y;
+                    point.dX = e.X - point.X;
+                    point.dY = e.Y - point.Y;
+                }
+            }
+
+            if (Polygon.IsPointInPolygon(Polygon.ConvexHull(points).ToArray(), new PointF(e.X, e.Y)))
+            {
+                foreach (Point point in points)
+                {
+                    point.Dragging = true;
+
+                    point.dX = e.X - point.X;
+                    point.dY = e.Y - point.Y;
                 }
             }
         }
 
         private void Form1_MouseMove(object sender, MouseEventArgs e)
         {
-            foreach (Point Point in points)
+            foreach (Point point in points)
             {
-                if (Point.Dragging)
+                if (point.Dragging)
                 {
-                    Point.X = e.X - Point.dX;
-                    Point.Y = e.Y - Point.dY;
-
-                    Refresh();
+                    point.X = e.X - point.dX;
+                    point.Y = e.Y - point.dY;
                 }
+
+                Refresh();
             }
         }
 
@@ -339,7 +350,7 @@ namespace Project_1
         }
     }
 
-    public class GrahamScan
+    public class Polygon
     {
         public static double Orientation(Point p, Point q, Point r)
         {
@@ -405,6 +416,20 @@ namespace Project_1
                               // point 
 
             return hull;
+        }
+
+        public static bool IsPointInPolygon(Point[] polygon, PointF point)
+        {
+            bool isInside = false;
+
+            for (int i = 0, j = polygon.Length - 1; i < polygon.Length; j = i++)
+            {
+                if (((polygon[i].Y > point.Y) != (polygon[j].Y > point.Y)) &&
+                (point.X < (polygon[j].X - polygon[i].X) * (point.Y - polygon[i].Y) / (polygon[j].Y - polygon[i].Y) + polygon[i].X))
+                    isInside = !isInside;
+            }
+
+            return isInside;
         }
     }
 }
