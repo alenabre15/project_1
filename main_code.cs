@@ -17,11 +17,23 @@ namespace Project_1
 
         private int pointChosen;
 
+        private Color color1;
+
+        private Color color2;
+
+        private int thickness;
+
         public Form1()
         {
             InitializeComponent();
 
             pointChosen = 0;
+
+            color1 = Color.White;
+
+            color2 = Color.Lime;
+
+            thickness = 10;
         }
 
         static Form1()
@@ -31,8 +43,6 @@ namespace Project_1
 
         private void Form1_Paint(object sender, PaintEventArgs e)
         {
-            BackColor = Color.Black;
-
             e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
 
             points = Polygon.ConvexHull(points);
@@ -42,15 +52,7 @@ namespace Project_1
                 point.Draw(e.Graphics);
             }
 
-            List<PointF> pointsF = new List<PointF>();
-
-            for (int i = 0; i < points.Count; ++i)
-            {
-                pointsF.Add(new PointF((float)points[i].X, (float)points[i].Y));
-            }          
-
-            if (points.Count > 2)
-                e.Graphics.FillPolygon(new SolidBrush(Color.White), pointsF.ToArray());
+            Polygon.Draw(points, e.Graphics, color1, color2, thickness);
         }
 
         private void Form1_MouseClick(object sender, MouseEventArgs e)
@@ -162,6 +164,132 @@ namespace Project_1
         {
             pointChosen = 3;
         }
+
+        private void BisqueToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            color1 = Color.Bisque;
+
+            Refresh();
+        }
+
+        private void BlueVioletToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            color1 = Color.BlueViolet;
+
+            Refresh();
+        }
+
+        private void ChocolateToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            color1 = Color.Chocolate;
+
+            Refresh();
+        }
+
+        private void DarkOrangeToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            color1 = Color.DarkOrange;
+
+            Refresh();
+        }
+
+        private void GoldToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            color1 = Color.Gold;
+
+            Refresh();
+        }
+
+        private void LightCoralToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            color1 = Color.LightCoral;
+
+            Refresh();
+        }
+
+        private void OliveToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            color1 = Color.Olive;
+
+            Refresh();
+        }
+
+        private void LightSeaGreenToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            color1 = Color.LightSeaGreen;
+
+            Refresh();
+        }
+
+        private void AquaToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            color2 = Color.Aqua;
+
+            Refresh();
+        }
+
+        private void WhiteToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            color2 = Color.White;
+
+            Refresh();
+        }
+
+        private void BlackToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            color2 = Color.Black;
+
+            Refresh();
+        }
+
+        private void MaroonToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            color2 = Color.Maroon;
+
+            Refresh();
+        }
+
+        private void OrangeRedToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            color2 = Color.OrangeRed;
+
+            Refresh();
+        }
+
+        private void YellowToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            color2 = Color.Yellow;
+
+            Refresh();
+        }
+
+        private void LightPinkToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            color2 = Color.LightPink;
+
+            Refresh();
+        }
+
+        private void SpringGreenToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            color2 = Color.SpringGreen;
+
+            Refresh();
+        }
+
+        private void TrackBar1_Scroll(object sender, EventArgs e)
+        {
+            Point.Radius = trackBar1.Value;
+
+            Refresh();
+        }
+
+        private void TrackBar2_Scroll(object sender, EventArgs e)
+        {
+            thickness = trackBar2.Value;
+
+            Refresh();
+        }
     }
 
     public abstract class Point
@@ -199,6 +327,13 @@ namespace Project_1
             get => y;
 
             set => y = value;
+        }
+
+        public static double Radius
+        {
+            get => radius;
+
+            set => radius = value;
         }
 
         public double dX
@@ -430,6 +565,23 @@ namespace Project_1
             }
 
             return isInside;
+        }
+
+        public static void Draw(List<Point> points, Graphics g, Color color1, Color color2, int thickness)
+        {
+            List<PointF> pointsF = new List<PointF>();
+
+            for (int i = 0; i < points.Count; ++i)
+            {
+                pointsF.Add(new PointF((float)points[i].X, (float)points[i].Y));
+            }
+
+            if (points.Count > 2)
+            {
+                g.FillPolygon(new SolidBrush(color1), pointsF.ToArray());
+
+                g.DrawPolygon(new Pen(color2, thickness), pointsF.ToArray());
+            }
         }
     }
 }
